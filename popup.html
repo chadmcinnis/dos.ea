@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>dos.ea</title>
+  <link rel="stylesheet" href="assets/css/materialize.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" >
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto" >
+  <link rel="stylesheet" href="assets/css/popup.css">
+</head>
+<body>
+<!-- <header><h2>dos.ea</h2></header>-->
+<main>
+<div id="edsQuickLink">
+  <li><a class="waves-effect waves-light btn profile" href="#" id="getsite" title="Get all site info"><i class="material-icons">select_all</i><span>Site Information</span></a></li>
+  <!-- <li><a class="btn profile" href="#" id="getprof" title="Get Profile Information"><i class="material-icons">cloud</i></a></li> -->
+  <li><a class="waves-effect waves-light btn auth" href="#" id="gotoauth" title="Go to Authentication tab"><i class="material-icons">lock_open</i><span>Authentication Tab</span></a></li>
+  <li><a class="waves-effect waves-light btn creds" href="#" id="getup" title="Get Username &amp; Password"><i class="material-icons">supervisor_account</i><span>Username & Password</span></a></li>
+  <li><a class="waves-effect waves-light btn link" href="#" id="gotocustserv" title="Go to Customize Services tab"><i class="material-icons">settings_overscan</i><span>Customize Services Tab</span></a></li><br>
+  <li><a class="waves-effect waves-light btn link" href="#" id="createlink" title="Create Link for Profile"><i class="material-icons">link</i><span id="cLinkText">Create Link</span></a></li>
+  <li><a class="waves-effect waves-light btn perma" href="#" id="permalink" title="Link to this Profile"><i class="material-icons">launch</i><span>Link to Profile</span></a></li>
+  <!-- <li><a class="waves-effect waves-light btn mail" href="#" id="mail" title="Search Cust ID"><i class="material-icons">search</i></a></li> -->
+  <li><a class="waves-effect waves-light btn site" href="#" id="activesite" title="Active Site"><i class="material-icons">location_searching</i><span>Active UI Site</span></a></li>
+  <li><a class="waves-effect waves-light btn remove" href="#" id="removeStorage" title="Erase Data"><i class="material-icons">delete_sweep</i><span>Clear Data</span></a></li>
+</div>
+<!-- <span class="inputData"><input type="text" id="profileInput" name="profid" placeholder="enter profile"><label id="profileInputClick" for="profileInput"><i class="fa fa-external-link" aria-hidden="true"></i></label></span> -->
+<table class="bordered striped">
+  <tbody id="tableContent">
+    <tr><td><a id="btncust" class="waves-effect waves-light btn"><span class="tbbtn"><i class="material-icons left">select_all</i>Site</span><span class="tbcpy"><i class="material-icons left">content_copy</i>Copy</span></a></td><td id="showCust" class="storval"></td><span id="searchcid" class="searchcid"><i class="material-icons right">search</i></span></tr>
+    <tr><td><a id="btngroup" class="waves-effect waves-light btn"><span class="tbbtn"><i class="material-icons left">select_all</i>Group</span><span class="tbcpy"><i class="material-icons left">content_copy</i>Copy</span></a></td><td id="showGroup" class="storval"></td></tr>
+    <tr><td><a id="btnprof" class="waves-effect waves-light btn"><span class="tbbtn"><i class="material-icons left">select_all</i>Profile</span><span class="tbcpy"><i class="material-icons left">content_copy</i>Copy</span></a></td><td id="showProfile" class="storval"></td></tr>
+    <tr><td><a id="btncname" class="waves-effect waves-light btn"><span class="tbbtn"><i class="material-icons left">business</i>Cust Name</span><span class="tbcpy"><i class="material-icons left">content_copy</i>Copy</span></a></td><td id="showCustName" class="storval"></td></tr>
+    <tr><td><a id="btnshort" class="waves-effect waves-light btn"><span class="tbbtn"><i class="material-icons left">cloud</i>Shortcut</span><span class="tbcpy"><i class="material-icons left">content_copy</i>Copy</span></a></td><td id="showShortcut" class="storval"></td></tr>
+    <tr><td><a id="btnuser" class="waves-effect waves-light btn"><span class="tbbtn"><i class="material-icons left">supervisor_account</i>Username</span><span class="tbcpy"><i class="material-icons left">content_copy</i>Copy</span></a></td><td id="showUser" class="storval"></td></tr>
+    <tr><td><a id="btnpass" class="waves-effect waves-light btn"><span class="tbbtn"><i class="material-icons left">supervisor_account</i>Password</span><span class="tbcpy"><i class="material-icons left">content_copy</i>Copy</span></a></td><td id="showPass" class="storval"></td></tr>
+    <tr><td><a id="btnurl" class="waves-effect waves-light btn"><span class="tbbtn"><i class="material-icons left">link</i>Permalink</span><span class="tbcpy"><i class="material-icons left">content_copy</i>Copy</span></a></td><td id="showUrl" class="storval"></td></tr>
+    <tr><td><a id="btnactive" class="waves-effect waves-light btn"><span class="tbbtn"><i class="material-icons left">location_searching</i>UI Site</span><span class="tbcpy"><i class="material-icons left">content_copy</i>Copy</span></a></td><td id="showActSite" class="storval"></td></tr>
+  </tbody>
+</table>
+<div id="authtypeSelect">
+  <p>Selected Auth</p><span class="placeAuth"></span>
+</div>
+<!--modules -->
+<div id="authtype" class="modal modal-fixed-footer options" style="z-index: 1005;">
+  <div class="modal-content">
+    <h5 class="center-align">AuthType Options</h5>
+    <div class="row">
+      <div class="col s6">
+        <p>Select any:</p>
+        <label for="ip"><input type="checkbox" class="filled-in" id="ip" name="authtype" value="ip"/><span>IP</span></label>
+        <label for="cookie"><input type="checkbox" class="filled-in" id="cookie" name="authtype" value="cookie"/><span>Cookie</span></label>
+        <label for="url"><input type="checkbox" class="filled-in" id="url" name="authtype" value="url"/><span>Referring URL</span></label>
+        <p>Use uname and pwd:</p>
+        <label for="embed_logins"><input type="radio" class="with-gap" id="embed_logins" name="authtype" value="embed_logins"/><span>Embed Logins</span></label>
+      </div>
+      <div class="col s6">
+        <p>Select any one:</p>
+        <label for="uid"><input type="radio" class="with-gap" id="uid" name="authtype" value="uid"/><span>UID</span></label>
+        <label for="guest"><input type="radio" class="with-gap" id="guest" name="authtype" value="guest"/><span>Guest</span></label>
+        <label for="cpid"><input type="radio" class="with-gap" id="cpid" name="authtype" value="cpid"/><span>CPID</span></label>
+        <label for="athens"><input type="radio" class="with-gap" id="athens" name="authtype" value="athens"/><span>Athens</span></label>
+        <label for="shib"><input type="radio" class="with-gap" id="shib" name="authtype" value="shib"/><span>Shibboleth</span></label>
+        <label for="sso"><input type="radio" class="with-gap" id="sso" name="authtype" value="sso"/><span>SSO</span></label>
+        <label for="custiud"><input type="radio" class="with-gap" id="custiud" name="authtype" value="custiud"/><span>Patron Files</span></label>
+      </div>
+    </div>
+    <div class="row authrow">
+      <p>authtype=<span id="currAuthType"></span></p>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <a id="modalCL" href="#!" class="modal-action modal-close waves-effect waves-green btn-flat ">Create Link</a>
+    <a id="modalLO" href="#!" class="modal-action modal-close waves-effect waves-green btn-flat ">Link Out</a>
+    <a id="clearAuthOps" href="#!" class="modal-action waves-effect waves-yellow btn-flat ">Clear</a>
+    <a id="saveAuthOps" href="#!" class="modal-action modal-close waves-effect waves-green btn-flat ">Close</a>
+  </div>
+</div>
+<div id="adminops" class="modal modal-fixed-footer" style="z-index: 1005;">
+  <div class="modal-content">
+    <h5 class="center-align">Admin Options</h5>
+    <div class="row">
+      <p class="center-align flow-text">Turn EBSCOadmin Customizations <br>On and Off</p>
+      <div class="col s5" style="padding:0">
+        <div class="switch"><label>Off<input id="pageNumbers" type="checkbox" ><span class="lever"></span>On</label></div><br>
+        <div class="switch"><label>Off<input id="dbHighlighting" type="checkbox" ><span class="lever"></span>On</label></div><br>
+        <div class="switch"><label>Off<input id="guestAccess" type="checkbox" ><span class="lever"></span>On</label></div><br>
+        <div class="switch"><label>Off<input id="profiles" type="checkbox" ><span class="lever"></span>On</label></div><br>
+        <div class="switch"><label>Off<input id="bottomBranding" type="checkbox" ><span class="lever"></span>On</label></div>
+      </div>
+      <div class="col s7" style="margin-top:-1px;padding:0">
+        <div class="opTitle"><a href="https://www.screencast.com/t/KxJ2vbO6It" >Database Page Numbers</a></div>
+        <div class="opTitle"><a href="https://www.screencast.com/t/xl5BxiiOdJ" >Database Highlighting</a></div>
+        <div class="opTitle"><a href="https://www.screencast.com/t/xWP9JYTrh" >Profile Highlighting</a></div>
+        <div class="opTitle"><a href="https://www.screencast.com/t/KLzHw7VVZ" >Modify Guest Access</a></div>
+        <div class="opTitle"><a href="https://www.screencast.com/t/Gu9tK4p7WG" >Select All Bottom Branding</a></div>
+      </div>
+    </div>
+    <p style="padding:0;margin:15px 0 0;font-style:italic;height:20px">Apply Changes will refresh your current tab</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat ">Close</a>
+    <a id="saveAdminOps" href="#!" class="modal-action modal-close waves-effect waves-green btn-flat ">Apply Changes</a>
+  </div>
+</div>
+<div id="modalWrongSite" class="modal error amber lighten-4" style="z-index: 1005;">
+  <div class="modal-content">
+    <h5><i class="material-icons">error_outline</i>dos.ea Error</h5>
+    <p>Incorrect Page - this feature is only available while in EBSCOadmin or EBSCO's user interfaces. Switch tabs to an EBSCO site, and try again. If you continue to see this, refresh your tabs, and clear data.</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-action modal-close waves-effect waves-yellow btn-flat">Close</a>
+  </div>
+</div>
+<div id="modalAuth" class="modal error amber lighten-4" style="z-index: 1005;">
+  <div class="modal-content">
+    <h5><i class="material-icons">error_outline</i>Authentication Tab Error</h5>
+    <p>The Site information button is best used on the Customized Services Tab. Either go there and click the button again, or change the "Current Site" on the Auth Tab to your desired customer.</p>
+  </div>
+  <div class="modal-footer">
+    <!-- <a id="clickAuthSelect" href="#!" class="modal-action modal-close waves-effect waves-yellow btn-flat">Click to limit to customer</a> -->
+    <a href="#!" class="modal-action modal-close waves-effect waves-yellow btn-flat">Close</a>
+  </div>
+</div>
+<div id="modalUP" class="modal error amber lighten-4" style="z-index: 1005;">
+  <div class="modal-content">
+    <h5><i class="material-icons">error_outline</i>Uname and Pwd Error</h5>
+    <p>Authentication info or customer info missing/incorrect. If you continue to see this, clear data and try again. You may need to narrow the password list down, if avaiable, try clicking the Current Site drop down.</p>
+  </div>
+  <div class="modal-footer">
+    <!-- <a id="clickAuthSelect" href="#!" class="modal-action waves-effect waves-yellow btn-flat">Click to limit to customer</a> -->
+    <a href="#!" class="modal-action modal-close waves-effect waves-yellow btn-flat">Close</a>
+  </div>
+</div>
+<div id="wrongTab" class="modal error amber lighten-4" style="z-index: 1005;">
+  <div class="modal-content">
+    <h5><i class="material-icons">error_outline</i>Wrong Place</h5>
+    <p>This feature doesn't work here. Sorry</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-action modal-close waves-effect waves-yellow btn-flat">Close</a>
+  </div>
+</div>
+<div id="modalClear" class="modal error amber lighten-4" style="z-index: 1005;">
+  <div class="modal-content">
+    <h5><i class="material-icons">error_outline</i>Something went wrong...</h5>
+    <p>Try clicking out of dos.ea, refreshing your tabs or clear data... maybe all three.</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-action modal-close waves-effect waves-yellow btn-flat">Close</a>
+  </div>
+</div>
+<div id="feedback" class="modal" style="z-index: 1005;"><i class="cancel material-icons modal-close right">cancel</i>
+  <div id="mail" class="modal-content">
+    <h5 class="center-align">Feedback or Report an Error</h5>
+    <div class="row">
+      <form class="col s12" name="contactform" method="post" action="https://widgets.ebscohost.com/customerspecific/chadmci/contactengine.php">
+        <div class="row">
+          <div class="input-field col s12">
+            <input id="name" type="text" name="name" class="validate" required>
+            <label for="name">Full Name*</label>
+          </div>
+          <div class="input-field col s12">
+            <input id="email" type="email" name="email" class="validate" required>
+            <label for="email">Email*</label>
+          </div>
+          <div class="message input-field col s12">
+            <textarea id="textarea1" name="textarea1" class="materialize-textarea" required></textarea>
+            <label for="textarea1">Message*</label>
+            <span class="helper-text" data-error="wrong" data-success="right">provide links screenshots, if needed</span>
+          </div>
+          <div class="input-field col s12 right-align">
+            <button id="submit" type="submit" name="submit" class="waves-effect waves-light btn-large blue lighten-2"><i class="material-icons right">send</i>send</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="success" class="modal-content"><i class="cancel material-icons modal-close right">cancel</i>
+    <h5 class="center-align">Feedback or Report an Error</h5>
+    <div class="row">
+      <div class="input-field col s12 center-align">
+        <button class="btn-large modal-close"><i class="material-icons left">check_box</i>success</button>
+      </div>
+    </div>
+  </div>
+</div>
+</main>
+<footer class="page-footer grey lighten-2">
+  <div style="position:relative; height: 55px;">
+    <div class="fixed-action-btn horizontal click-to-toggle">
+      <a class="btn-floating btn-large blue-grey darken-4">
+        <i class="material-icons">menu</i>
+      </a>
+      <ul>
+        <li><a id="menuMail" class="btn-floating blue-grey lighten-1 modal-trigger tooltipped" data-position="top" data-delay="50" data-tooltip="Feedback/Issues" href="#feedback"><i class="material-icons">mail</i></a></li>
+        <li><a id="menuEadmin" class="btn-floating blue-grey lighten-1 modal-trigger tooltipped" data-position="top" data-delay="50" data-tooltip="Eadmin Options" href="#adminops"><i class="material-icons">settings</i></a></li>
+        <li><a id="menuAuthType" class="btn-floating blue-grey lighten-1 modal-trigger tooltipped" data-position="top" data-delay="50" data-tooltip="AuthType Options" href="#authtype"><i class="material-icons">link</i></a></li>
+      </ul>
+    </div>
+      <h5 class="right"><span>&#x3C;</span> dos.ea <span>&#x2F;&#x3E;</span></h5>
+  </div>
+</footer>
+</body>
+<script src="assets/js/jquery-3.2.1.min.js"></script>
+<script src="assets/js/materialize.min.js"></script>
+<script src="assets/js/popup.js"></script>
+</html>
