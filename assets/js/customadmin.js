@@ -20,6 +20,7 @@ var getData = $('#doseaCustomAdmin').data('params');
   //databases formatting
   if(window.location.pathname.indexOf('CustomizeServiceDatabasesForm') > -1) {
     if(pageNumbers) {
+      var nav = '';
       if ($('[alt="MoveDown"]').length > 0 || $('[alt="MoveUp"]').length > 0) {
         if ($('[alt="MoveDown"]').length > 0) {
           var onclick = $('[alt="MoveDown"]').attr('onclick');
@@ -30,7 +31,6 @@ var getData = $('#doseaCustomAdmin').data('params');
         var currentPage = onclick.split(',')[1].trim();
         var lastPage = onclick.split(',')[2].replace(')','').trim();
         var lastPageValue = lastPage-2;
-        var nav = '';
         var pgDsp = '';
 
         if (currentPage == 0) {
@@ -56,9 +56,10 @@ var getData = $('#doseaCustomAdmin').data('params');
         } else {
           nav += '<button style="margin-left:5px;" onclick="doAdminGridUpDown(\'MoveDown\', '+lastPageValue+', '+lastPage+')">Last Page</button>';
         }
-
-        $('#details tbody:first .style1 td').append('<span style="font-weight:bold;margin-left:10px;padding-left:10px;border-left:1px solid #000;">Page:'+nav+'</span>');
+      } else {
+        nav += '<button style="margin-left:5px;" disabled>First Page</button>';
       }
+      $('#details tbody:first .style1 td').append('<span style="font-weight:bold;margin-left:10px;padding-left:10px;border-left:1px solid #000;">Page:'+nav+'</span>');
     }
     if(dbHighlighting) {
       //colors, highlighting
