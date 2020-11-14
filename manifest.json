@@ -4,7 +4,10 @@
   "version": "2.0",
   "description": "this extension isn't perfect, and neither are you, bubs.",
   "background": {
-    "scripts": ["/assets/js/background.js"]
+    "scripts": [
+      "/assets/lib/browser-polyfill.min.js",
+      "/assets/js/background.js"
+    ]
   },
   "browser_action": {
     "default_icon": "/assets/icon/icon.png",
@@ -13,32 +16,16 @@
   "content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'",
   "content_scripts": [
     {
-      "matches": [
-        "*://*.ebscohost.com/*",
-        "*://*/eds*",
-        "*://*/ehost*",
-        "*://*/openurl*",
-        "*://*/pfi*",
-        "*://*/bsi*"
-      ],
+      "matches": ["<all_urls>"],
       "js": [
-        "/assets/js/jquery-3.2.1.min.js",
+        "/assets/lib/browser-polyfill.min.js",
+        "/assets/lib/jquery-3.2.1.min.js",
         "/assets/js/script.js",
         "/assets/js/injected-script.js"
       ]
     }
   ],
-  "permissions": [
-    "*://*.ebscohost.com/*",
-    "*://*/bsi*",
-    "*://*/eds*",
-    "*://*/ehost*",
-    "*://*/openurl*",
-    "*://*/pfi*",
-    "clipboardWrite",
-    "storage",
-    "tabs"
-  ],
+  "permissions": ["<all_urls>", "clipboardWrite", "storage", "tabs"],
   "icons": {
     "16": "/assets/icon/icon.png",
     "48": "/assets/icon/icon.png",
