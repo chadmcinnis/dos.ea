@@ -1,19 +1,18 @@
-var custName, custId, groupId, profId;
-var credInfo = [];
-var optionSet = [];
-var custIdVal, groupIdVal, profIdVal;
-var eadmin, id, state, curopt, optionSet;
+let custName, custId, groupId, profId;
+let credInfo = [];
+let optionSet = [];
+let custIdVal, groupIdVal, profIdVal;
+let eadmin, id, state, curopt;
 
 const isEadmin = window.location.hostname.includes('eadmin');
 const isPathname = txt => window.location.pathname.includes(txt);
 
 (async function () {
-  if ((isEadmin && isPathname('CustomizeEhostColorsForm')) || !isEadmin) {
-    console.log('STOP');
+  if (!isEadmin || (isEadmin && isPathname('CustomizeEhostColorsForm'))) {
     return;
   }
 
-  var jq = document.createElement('script');
+  let jq = document.createElement('script');
   jq.src = 'https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js';
   document.getElementsByTagName('head')[0].appendChild(jq);
 
@@ -81,9 +80,7 @@ function getProfid() {
   return profId;
 }
 
-function handleMessage(request, sender) {
-  console.log('script: ', { request, sender });
-
+function handleMessage(request) {
   return new Promise(resolve => {
     //check to see if we're on an ebsco site
     if (request.function == 'sitecheck') {
@@ -129,11 +126,11 @@ function handleMessage(request, sender) {
     //get the custid.groupid.profid in current ui
     if (request.function == 'getuisite') {
       if (!isPathname('/openurl')) {
-        var ep = document.getElementsByTagName('script');
-        var json = null;
-        for (var i = 0; i < ep.length; i++) {
-          var text = ep[i].textContent;
-          if (text.indexOf('var ep =') > -1) {
+        let ep = document.getElementsByTagName('script');
+        let json = null;
+        for (let i = 0; i < ep.length; i++) {
+          let text = ep[i].textContent;
+          if (text.indexOf('let ep =') > -1) {
             json = JSON.parse(text.split('ep =')[1]);
           }
         }
@@ -141,15 +138,15 @@ function handleMessage(request, sender) {
         if (json && json.clientData && json.clientData.pid) {
           resolve({ edsPro: json.clientData.pid });
         } else {
-          var content = $('footer').html();
-          var edsProfile = content.match(/<!-- user\:.*?-->/g)[0];
+          let content = $('footer').html();
+          let edsProfile = content.match(/<!-- user\:.*?-->/g)[0];
           edsProfile = edsProfile.split('<!-- user: ')[1];
           edsProfile = edsProfile.split(' -->')[0];
           resolve({ edsPro: edsProfile });
         }
       } else {
-        var lastDiv = $('#footerControl div').last();
-        var checkPieces = lastDiv.text().split('.');
+        let lastDiv = $('#footerControl div').last();
+        let checkPieces = lastDiv.text().split('.');
         if (checkPieces.length === 3) {
           resolve({ edsPro: lastDiv.text() });
         } else {
@@ -168,22 +165,22 @@ browser.runtime.onMessage.addListener(handleMessage);
 // if (request.function == 'getup') {
 //   custId = request.custId;
 //   groupId = request.groupId;
-//   var y = 0;
-//   var match = false;
-//   var tabLen = $('#grid_MainDataGrid .DataGrid-EmptyWhiteStyle input').length;
-//   var currentDate = new Date();
+//   let y = 0;
+//   let match = false;
+//   let tabLen = $('#grid_MainDataGrid .DataGrid-EmptyWhiteStyle input').length;
+//   let currentDate = new Date();
 //   $('#grid_MainDataGrid tr:not(:first)').each(function () {
 //     if (y <= tabLen) {
-//       var rowContents = $(this).find('.DataGrid-EmptyWhiteStyle input').val();
-//       var authInfo = rowContents.split(',');
-//       var rowUser = authInfo[0];
-//       var rowPass = authInfo[1];
-//       var rowCustid = authInfo[2];
-//       var rowGroup = authInfo[3];
+//       let rowContents = $(this).find('.DataGrid-EmptyWhiteStyle input').val();
+//       let authInfo = rowContents.split(',');
+//       let rowUser = authInfo[0];
+//       let rowPass = authInfo[1];
+//       let rowCustid = authInfo[2];
+//       let rowGroup = authInfo[3];
 //       if (custId == rowCustid && groupId == rowGroup) {
-//         var expireDate = $(this).find('span[id*="_ExpireDate_"]');
+//         let expireDate = $(this).find('span[id*="_ExpireDate_"]');
 //         if (expireDate) {
-//           var expireDateVal = new Date(expireDate.text());
+//           let expireDateVal = new Date(expireDate.text());
 //           if (currentDate.getTime() > expireDateVal.getTime()) {
 //             expireDate.parent().css('background-color', '#ff000078');
 //             return true;

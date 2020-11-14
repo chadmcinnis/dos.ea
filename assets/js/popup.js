@@ -8,14 +8,24 @@ import {
   sendMessageToActiveTab,
 } from './helpers.js';
 
-var custName, custId, groupId, profId, credsCustId, credsGroupId, profURL;
-var textField, textCopy, edsProfile, site, user, pwd, value, authtype, creds;
-var none, saveOptions, admimVal, curopt, type, authSel;
-var a = 0;
-
 var _gaq = _gaq || [];
 _gaq.push(['_setAccount', 'UA-111199777-1']);
 _gaq.push(['_trackPageview']);
+
+(function () {
+  var ga = document.createElement('script');
+  ga.type = 'text/javascript';
+  ga.async = true;
+  ga.src = 'https://ssl.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0];
+  s.parentNode.insertBefore(ga, s);
+})();
+
+let custName, custId, groupId, profId, credsCustId, credsGroupId, profURL;
+let textField, textCopy, edsProfile, site, user, pwd, value, authtype, creds;
+let saveOptions;
+let currAuthType;
+let a = 0;
 
 $('.opTitle').on('click', 'a', function () {
   createTab({ url: $(this).attr('href') });
@@ -31,18 +41,18 @@ function updateAuth() {
 
 function chips(authSel) {
   if (authSel != '') {
-    let setChipHtml = el =>
-      `<div class="chip"><span id="chip_${el}">${el}</span><i id="i_${el}" class="close material-icons chips_close">close</i></div>`;
     $('.placeAuth').html('');
 
-    var authSelArr = authSel.split(',');
+    let setChipHtml = el =>
+      `<div class="chip"><span id="chip_${el}">${el}</span><i id="i_${el}" class="close material-icons chips_close">close</i></div>`;
+    let authSelArr = authSel.split(',');
     authSelArr.forEach(authSel => {
       $('.placeAuth').append(setChipHtml(authSel));
     });
 
-    if ($('.chips_close').length > 0) {
-      var z = document.getElementsByClassName('chips_close');
-      for (var i = 0; i < z.length; i++) {
+    if ($('.chips_close').length) {
+      let z = document.getElementsByClassName('chips_close');
+      for (let i = 0; i < z.length; i++) {
         z[i].addEventListener('click', updateAuth, false);
       }
     }
@@ -58,13 +68,6 @@ function authDefaults() {
 }
 
 (async function () {
-  var ga = document.createElement('script');
-  ga.type = 'text/javascript';
-  ga.async = true;
-  ga.src = 'https://ssl.google-analytics.com/ga.js';
-  var s = document.getElementsByTagName('script')[0];
-  s.parentNode.insertBefore(ga, s);
-
   let activeTab = await getActiveTab();
   let parsedUrl = new URL(activeTab.url);
   switch (true) {
@@ -74,8 +77,8 @@ function authDefaults() {
     case parsedUrl.host.includes('discovery.ebsco'):
       site = 'crux';
       break;
-    case parsedUrl.host.match(/\/(ebscohost|eds|ehost|resolver|web)/i):
-    case parsedUrl.path.match(/\/(bsi|ehost|openurl|pfi)/i):
+    case parsedUrl.host.match(/ebscohost|eds|ehost|resolver|web/gi).length > 0:
+    case parsedUrl.pathname.match(/bsi|ehost|openurl|pfi/gi).length > 0:
       site = 'ebscohost';
       break;
     default:
@@ -107,7 +110,8 @@ function authDefaults() {
   uisite && $('#showActSite').text(uisite.edsProfile);
   permalink && $('#showUrl').text(permalink.profURL);
 
-  if (saveAuthOps) {
+  if (saveAuthOps && saveAuthOps.selected) {
+    let authtypeOrg = saveAuthOps.selected;
     chips(authtypeOrg);
     if (authtypeOrg.indexOf(',') > -1) {
       authtype = authtypeOrg.split(',');
@@ -175,7 +179,7 @@ async function getsite() {
           $('#showShortcut').text(`${custId}.${groupId}.${profId}`);
         }
 
-        var sitestorage = {
+        let sitestorage = {
           custId: custId,
           groupId: groupId,
           profId: profId,
@@ -202,7 +206,7 @@ async function getsite() {
         $('#showPass').text('');
         user = pwd = credsCustId = credsGroupId = '';
 
-        var credsstorage = {
+        let credsstorage = {
           user: user,
           pwd: pwd,
           credsCustId: credsCustId,
@@ -248,7 +252,7 @@ async function getup() {
       $('#showUser').text(user);
       $('#showPass').text(pwd);
 
-      var credsstorage = {
+      let credsstorage = {
         user: user,
         pwd: pwd,
         credsCustId: credsCustId,
@@ -273,7 +277,7 @@ async function getuisite() {
     edsProfile = getuisiteResp.edsPro;
     $('#showActSite').text(edsProfile);
 
-    var uisite = { edsProfile };
+    let uisite = { edsProfile };
     setLocalStorage({ uisite });
   } else {
     $('#wrongTab').modal('open');
@@ -300,7 +304,7 @@ function createlink() {
     pwd = $('#showPass').text();
 
     if (user == '' && pwd == '') {
-      var $toastContent = $('<span>Missing User/Password</span>');
+      let $toastContent = $('<span>Missing User/Password</span>');
       M.toast({ html: $toastContent }, 2000);
     }
 
@@ -319,15 +323,15 @@ function createlink() {
   }`;
   $('#showUrl').text(profURL);
 
-  var permalink = { profURL };
+  let permalink = { profURL };
   setLocalStorage({ permalink });
 
   return profURL;
 }
 
 function openPermaLink() {
-  var permaUrl = createlink();
-  var win = window.open(permaUrl, '_blank');
+  let permaUrl = createlink();
+  let win = window.open(permaUrl, '_blank');
   if (win) {
     win.focus();
   } else {
@@ -349,17 +353,17 @@ $('table tbody tr td a:not(#btnauthtype)').on('click', function () {
   textField = $(this).parent().next('td');
   textCopy = textField.text();
   if (textCopy !== '') {
-    var copyFrom = document.createElement('textarea');
+    let copyFrom = document.createElement('textarea');
     copyFrom.textContent = textCopy;
-    var body = document.getElementsByTagName('body')[0];
+    let body = document.getElementsByTagName('body')[0];
     body.appendChild(copyFrom);
     copyFrom.select();
     document.execCommand('copy');
     body.removeChild(copyFrom);
-    var $toastContent = $('<span>Copied</span>');
+    let $toastContent = $('<span>Copied</span>');
     M.toast({ html: $toastContent }, 2000);
   } else {
-    var $toastContent = $('<span>Unable to copy text</span>');
+    let $toastContent = $('<span>Unable to copy text</span>');
     M.toast({ html: $toastContent }, 2000);
   }
 });
@@ -402,11 +406,9 @@ function clearAuthOps() {
 }
 
 let optionSwitches = $('.switch input:not(#selectNoneOrAll)');
-console.log(optionSwitches);
-
 $('#selectNoneOrAll').on('click', function () {
-  var adminOpsArr = [];
-  var checked = this.checked;
+  let adminOpsArr = [];
+  let checked = this.checked;
   [...optionSwitches].forEach(opt => {
     opt.checked = checked;
     adminOpsArr.push(`${opt.id}=${checked}`);
@@ -415,9 +417,8 @@ $('#selectNoneOrAll').on('click', function () {
   localStorage.setItem('adminOptions', adminOpsArr);
 });
 
-console.log(optionSwitches);
 optionSwitches.on('click', function () {
-  var adminOpsArr = [];
+  let adminOpsArr = [];
   [...optionSwitches].forEach(opt => {
     console.log({ opt });
     console.log(opt.id);
@@ -427,12 +428,11 @@ optionSwitches.on('click', function () {
     adminOpsArr.push(`${opt.id}=${opt.checked == true}`);
   });
 
-  console.log({ adminOpsArr });
   localStorage.setItem('adminOptions', adminOpsArr);
 });
 
 $('a[href="#authtype"]').on('click', function () {
-  var currAuthType = $('#currAuthType').text();
+  let currAuthType = $('#currAuthType').text();
   if (
     !currAuthType.match(
       /(uid|guest|cpid|shib|sso|custiud|athens|embed_logins)/g
@@ -449,7 +449,7 @@ $('input[name="authtype"]').on('click', function () {
     $('#embed_logins').prop('checked', false);
   }
 
-  var currAuthType = $('#currAuthType').text();
+  let currAuthType = $('#currAuthType').text();
   if ($(this).hasClass('chk') && this.checked && this.type == 'radio') {
     $(this).removeClass('chk');
     $('#' + this.id).prop('checked', false);
@@ -476,7 +476,7 @@ $('input[name="authtype"]').on('click', function () {
       } else if (this.checked === false) {
         currAuthType = currAuthType.replace(this.value, '');
       } else if (this.type == 'radio') {
-        var radio = currAuthType.split(',').pop();
+        let radio = currAuthType.split(',').pop();
         if (radio.match(/(ip|cookie|url)/g)) {
           currAuthType += ',' + this.value;
         } else if (radio != this.value) {
@@ -557,15 +557,15 @@ function trackButtonClick(e) {
   _gaq.push(['_trackEvent', e.target.id, 'clicked']);
 }
 
-var inputs = document.querySelectorAll('input');
-for (var m = 0; m < inputs.length; m++) {
+let inputs = document.querySelectorAll('input');
+for (let m = 0; m < inputs.length; m++) {
   inputs[m].addEventListener('click', trackButtonClick);
 }
-var links = document.querySelectorAll('a');
-for (var q = 0; q < links.length; q++) {
+let links = document.querySelectorAll('a');
+for (let q = 0; q < links.length; q++) {
   links[q].addEventListener('click', trackButtonClick);
 }
-var buttons = document.querySelectorAll('button');
-for (var n = 0; n < buttons.length; n++) {
+let buttons = document.querySelectorAll('button');
+for (let n = 0; n < buttons.length; n++) {
   buttons[n].addEventListener('click', trackButtonClick);
 }

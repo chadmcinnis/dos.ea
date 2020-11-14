@@ -1,3 +1,5 @@
+export const createTab = async obj => browser.tabs.create(obj);
+
 export const getActiveTab = async () => {
   const tabsArr = await browser.tabs.query({
     active: true,
@@ -11,8 +13,6 @@ export const sendMessageToActiveTab = async message => {
   let activeTab = await getActiveTab();
   return await browser.tabs.sendMessage(activeTab.id, message);
 };
-
-export const createTab = async obj => browser.tabs.create(obj);
 
 export const getSelf = async () => browser.management.getSelf();
 
@@ -70,17 +70,3 @@ export const loadLocalStorageInUi = async () => {
     }),
   };
 };
-
-// browser.storage.onChanged.addListener(function (changes, namespace) {
-//   for (var key in changes) {
-//     var storageChange = changes[key];
-//     console.log(
-//       'Storage key "%s" in namespace "%s" changed. ' +
-//         'Old value was "%s", new value is "%s".',
-//       key,
-//       namespace,
-//       storageChange.oldValue,
-//       storageChange.newValue
-//     );
-//   }
-// });

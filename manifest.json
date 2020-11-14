@@ -22,7 +22,8 @@
         "/assets/lib/jquery-3.2.1.min.js",
         "/assets/js/script.js",
         "/assets/js/injected-script.js"
-      ]
+      ],
+      "run_at": "document_idle"
     }
   ],
   "permissions": ["<all_urls>", "clipboardWrite", "storage", "tabs"],

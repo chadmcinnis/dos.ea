@@ -14,11 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 const getup = async () => {
   console.log('run getup');
 
-  let messageResp = await sendMessageToActiveTab({
-    function: 'getup',
-    a: [1, 2, 3],
-    b: 'text',
-  });
+  let messageResp = await sendMessageToActiveTab({ crux: true });
   console.log({ messageResp });
 };
 

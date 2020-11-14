@@ -1,7 +1,4 @@
-function handleMessage(request, sender) {
-  console.log({ request });
-  console.log({ sender });
-
+function handleMessage(request) {
   return new Promise(resolve => {
     if (request.getoptions !== 'frombg') {
       return resolve();
