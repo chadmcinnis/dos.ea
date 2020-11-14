@@ -1,32 +1,35 @@
-function updateMessage(version) {
+import { getSelf } from './helpers.js';
+
+(async function () {
+  let self = await getSelf();
+
   var updateMsg = JSON.parse(localStorage.getItem('update-msg'));
-  if (!updateMsg || (!updateMsg.closedModal && updateMsg.version !== version)) {
-    var update =
-      '<div id="updateComplete" class="update-complete-div"><i id="i_updateComplete_close" class="close material-icons update-complete-close">close</i><span class="update-complete-span1">App Update Complete</span><span class="update-complete-span2">[Minor] Resolved issue where API creds were passed to permalink<br />**&nbsp;&nbsp;&nbsp;Coming Soon ~ dos.ea v2 &nbsp;&nbsp;&nbsp;**</span></div>';
-
-    var footerActive = $('footer.page-footer.grey.lighten-2 > div');
-    if (footerActive) {
-      footerActive.prepend(update);
-
-      var updateComplete = $('#updateComplete');
-      if (updateComplete) {
-        document.getElementById(
-          'i_updateComplete_close'
-        ).onclick = function () {
-          _gaq.push(['_trackEvent', 'i_updateComplete_close', 'clicked']);
-
-          $('#updateComplete').remove();
-          var obj = {
-            version,
-            closedModal: true,
-          };
-
-          localStorage.setItem('update-msg', JSON.stringify(obj));
-        };
-      }
-    }
+  var footerActive = $('footer.page-footer.grey.lighten-2 > div');
+  if (
+    (updateMsg &&
+      updateMsg.closedModal &&
+      updateMsg.version === self.version) ||
+    !footerActive
+  ) {
+    return false;
   }
-}
 
-const version = 2.0;
-updateMessage(version);
+  var update =
+    '<div id="updateComplete" class="update-complete-div"><i id="i_updateComplete_close" class="close material-icons update-complete-close">close</i><span class="update-complete-span1">App Update Complete</span><span class="update-complete-span2">[Minor] Resolved issue where API creds were passed to permalink<br />**&nbsp;&nbsp;&nbsp;Coming Soon ~ dos.ea v2 &nbsp;&nbsp;&nbsp;**</span></div>';
+  footerActive.prepend(update);
+
+  if ($('#updateComplete')) {
+    document.getElementById('i_updateComplete_close').onclick = function () {
+      _gaq.push(['_trackEvent', 'i_updateComplete_close', 'clicked']);
+
+      $('#updateComplete').remove();
+
+      var obj = {
+        version: self.version,
+        closedModal: true,
+      };
+
+      localStorage.setItem('update-msg', JSON.stringify(obj));
+    };
+  }
+})();

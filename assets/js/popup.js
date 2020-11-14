@@ -1,3 +1,13 @@
+import {
+  createTab,
+  getActiveTab,
+  getLocalStorage,
+  setLocalStorage,
+  clearLocalStorage,
+  loadLocalStorageInUi,
+  sendMessageToActiveTab,
+} from './helpers.js';
+
 var custName, custId, groupId, profId, credsCustId, credsGroupId, profURL;
 var textField, textCopy, edsProfile, site, user, pwd, value, authtype, creds;
 var none, saveOptions, admimVal, curopt, type, authSel;
@@ -6,28 +16,9 @@ var a = 0;
 var _gaq = _gaq || [];
 _gaq.push(['_setAccount', 'UA-111199777-1']);
 _gaq.push(['_trackPageview']);
-(function () {
-  var ga = document.createElement('script');
-  ga.type = 'text/javascript';
-  ga.async = true;
-  ga.src = 'https://ssl.google-analytics.com/ga.js';
-  var s = document.getElementsByTagName('script')[0];
-  s.parentNode.insertBefore(ga, s);
-})();
-
-chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-  var windowUrl = tabs[0].url;
-  if (windowUrl && windowUrl.indexOf('eadmin') > -1) {
-    site = 'eadmin';
-  } else if (windowUrl.match(/\/(bsi|ehost|eds|openurl|pfi)/i)) {
-    site = 'ebscohost';
-  } else {
-    site = 'warning';
-  }
-});
 
 $('.opTitle').on('click', 'a', function () {
-  chrome.tabs.create({ url: $(this).attr('href') });
+  createTab({ url: $(this).attr('href') });
   return false;
 });
 
@@ -40,32 +31,15 @@ function updateAuth() {
 
 function chips(authSel) {
   if (authSel != '') {
-    if (authSel.indexOf(',') == -1) {
-      $('.placeAuth').html(
-        '<div class="chip"><span id="chip_' +
-          authSel +
-          '">' +
-          authSel +
-          '</span><i id="i_' +
-          authSel +
-          '" class="close material-icons chips_close">close</i></div>'
-      );
-    } else {
-      $('.placeAuth').html('');
-      var authSelArr = authSel.split(',');
-      $(authSelArr).each(function () {
-        authSel = this;
-        $('.placeAuth').append(
-          '<div class="chip"><span id="chip_' +
-            authSel +
-            '">' +
-            authSel +
-            '</span><i id="i_' +
-            authSel +
-            '" class="close material-icons chips_close">close</i></div>'
-        );
-      });
-    }
+    let setChipHtml = el =>
+      `<div class="chip"><span id="chip_${el}">${el}</span><i id="i_${el}" class="close material-icons chips_close">close</i></div>`;
+    $('.placeAuth').html('');
+
+    var authSelArr = authSel.split(',');
+    authSelArr.forEach(authSel => {
+      $('.placeAuth').append(setChipHtml(authSel));
+    });
+
     if ($('.chips_close').length > 0) {
       var z = document.getElementsByClassName('chips_close');
       for (var i = 0; i < z.length; i++) {
@@ -83,75 +57,93 @@ function authDefaults() {
   chips('embed_logins');
 }
 
-//get any information stored
-chrome.storage.local.get(
-  ['sitestorage', 'credsstorage', 'uisite', 'permalink', 'saveAuthOps'],
-  function (items) {
-    if (typeof items.sitestorage !== 'undefined') {
-      custId = items.sitestorage.custId;
-      groupId = items.sitestorage.groupId;
-      profId = items.sitestorage.profId;
-      custName = items.sitestorage.custName;
-      $('#showCust').text(custId);
-      $('#showGroup').text(groupId);
-      $('#showProfile').text(profId);
-      $('#showCustName').text(custName);
-      $('#showShortcut').text(custId + '.' + groupId + '.' + profId);
-    }
-    if (typeof items.credsstorage !== 'undefined') {
-      user = items.credsstorage.user;
-      pwd = items.credsstorage.pwd;
-      $('#showUser').text(user);
-      $('#showPass').text(pwd);
-    }
-    if (typeof items.uisite !== 'undefined') {
-      edsProfile = items.uisite.edsProfile;
-      $('#showActSite').text(edsProfile);
-    }
-    if (typeof items.permalink !== 'undefined') {
-      profURL = items.permalink.profURL;
-      $('#showUrl').text(profURL);
-    }
-    if (typeof items.saveAuthOps !== 'undefined') {
-      authtypeOrg = items.saveAuthOps.selected;
-      chips(authtypeOrg);
-      if (authtypeOrg.indexOf(',') > -1) {
-        authtype = authtypeOrg.split(',');
-        $(authtype).each(function () {
-          value = this;
-          $('[id="' + value + '"]').prop('checked', true);
-        });
-      } else {
-        $('#ip,#cookie,#url').prop('checked', false);
-        $('[id="' + authtypeOrg + '"]').prop('checked', true);
-      }
-      $('#currAuthType').text(authtypeOrg);
-    } else if (typeof items.saveAuthOps === 'undefined') {
-      authDefaults();
-    }
-  }
-);
+(async function () {
+  var ga = document.createElement('script');
+  ga.type = 'text/javascript';
+  ga.async = true;
+  ga.src = 'https://ssl.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0];
+  s.parentNode.insertBefore(ga, s);
 
-if ('adminOptions' in localStorage) {
-  var optionSet = localStorage.getItem('adminOptions');
-  optionSet = optionSet.split(',');
-  $(optionSet).each(function () {
-    curopt = this;
-    id = curopt.split('=')[0];
-    state = curopt.split('=')[1];
-    $('.switch input').each(function () {
-      if (this.id == id && state == 'true') {
-        $(this).prop('checked', true);
-      } else if (this.id == id) {
-        $(this).prop('checked', false);
-      }
+  let activeTab = await getActiveTab();
+  let parsedUrl = new URL(activeTab.url);
+  switch (true) {
+    case parsedUrl.host.includes('eadmin'):
+      site = 'eadmin';
+      break;
+    case parsedUrl.host.includes('discovery.ebsco'):
+      site = 'crux';
+      break;
+    case parsedUrl.host.match(/\/(ebscohost|eds|ehost|resolver|web)/i):
+    case parsedUrl.path.match(/\/(bsi|ehost|openurl|pfi)/i):
+      site = 'ebscohost';
+      break;
+    default:
+      site = 'warning';
+  }
+
+  //get all information stored and insert it in popup UI
+  let {
+    sitestorage,
+    credsstorage,
+    uisite,
+    permalink,
+    saveAuthOps,
+  } = await loadLocalStorageInUi();
+
+  if (sitestorage) {
+    $('#showCust').text(sitestorage.custId);
+    $('#showGroup').text(sitestorage.groupId);
+    $('#showProfile').text(sitestorage.profId);
+    $('#showCustName').text(sitestorage.custName);
+    $('#showShortcut').text(sitestorage.shortcut);
+  }
+
+  if (credsstorage) {
+    $('#showUser').text(credsstorage.user);
+    $('#showPass').text(credsstorage.pwd);
+  }
+
+  uisite && $('#showActSite').text(uisite.edsProfile);
+  permalink && $('#showUrl').text(permalink.profURL);
+
+  if (saveAuthOps) {
+    chips(authtypeOrg);
+    if (authtypeOrg.indexOf(',') > -1) {
+      authtype = authtypeOrg.split(',');
+      $(authtype).each(function () {
+        value = this;
+        $('[id="' + value + '"]').prop('checked', true);
+      });
+    } else {
+      $('#ip,#cookie,#url').prop('checked', false);
+      $('[id="' + authtypeOrg + '"]').prop('checked', true);
+    }
+    $('#currAuthType').text(authtypeOrg);
+  } else {
+    authDefaults();
+  }
+
+  // load from localStorage
+  if ('adminOptions' in localStorage) {
+    let optionSet = localStorage.getItem('adminOptions');
+    optionSet = optionSet.split(',');
+    optionSet.forEach(opt => {
+      let arr = opt.split('=');
+      let id = arr[0];
+      let state = arr[1];
+      $('.switch input:not(#selectNoneOrAll)').each(function () {
+        if (this.id == id) {
+          $(this).prop('checked', state == 'true');
+        }
+      });
     });
-  });
-} else {
-  $('.switch input').each(function () {
-    $(this).prop('checked', false);
-  });
-}
+  } else {
+    $('.switch input').each(function () {
+      $(this).prop('checked', false);
+    });
+  }
+})();
 
 function warnMessage(msg) {
   $('#modalWrongSite').modal('open');
@@ -161,126 +153,113 @@ function modalClear(msg) {
 }
 
 //get custid, groupid, profid, custname, and create shortcut
-function getsite() {
+async function getsite() {
   if (site == 'eadmin') {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, { function: 'getsite' }, function (
-        response
-      ) {
-        if (typeof response !== 'undefined') {
-          custId = response.siteInfo[0];
-          groupId = response.siteInfo[1];
-          profId = response.siteInfo[2];
-          custName = response.siteInfo[3];
-          if (custId !== 'all') {
-            custId ? $('#showCust').text(custId) : 'None';
-            groupId ? $('#showGroup').text(groupId) : 'None';
-            profId ? $('#showProfile').text(profId) : 'None';
-            custName ? $('#showCustName').text(custName) : 'None';
+    let siteResp = await sendMessageToActiveTab({ function: 'getsite' });
 
-            if (custId !== null && groupId !== null && profId !== null) {
-              $('#showShortcut').text(custId + '.' + groupId + '.' + profId);
-            }
+    console.log({ siteResp });
 
-            var siteVal = {
-              custId: custId,
-              groupId: groupId,
-              profId: profId,
-              custName: custName,
-            };
+    if (typeof siteResp !== 'undefined') {
+      custId = siteResp.siteInfo[0];
+      groupId = siteResp.siteInfo[1];
+      profId = siteResp.siteInfo[2];
+      custName = siteResp.siteInfo[3];
 
-            chrome.storage.local.set({
-              sitestorage: siteVal,
-            });
-          } else {
-            $('#modalAuth').modal('open');
-            allSites();
-          }
-        } else {
-          chrome.storage.local.clear(function () {
-            $('#modalClear').modal('open');
-          });
+      if (custId !== 'all') {
+        custId ? $('#showCust').text(custId) : 'None';
+        groupId ? $('#showGroup').text(groupId) : 'None';
+        profId ? $('#showProfile').text(profId) : 'None';
+        custName ? $('#showCustName').text(custName) : 'None';
+
+        if (custId && groupId && profId) {
+          $('#showShortcut').text(`${custId}.${groupId}.${profId}`);
         }
-      });
-    });
-    chrome.storage.local.get('credsstorage', function (items) {
-      if (typeof items.credsstorage !== 'undefined') {
-        credsCustId = items.credsstorage.credsCustId;
-        credsGroupId = items.credsstorage.credsGroupId;
-        if (custId != credsCustId || groupId != credsGroupId) {
-          $('#showUser').text('');
-          $('#showPass').text('');
-          user = pwd = credsCustId = credsGroupId = '';
-          var credVal = {
-            user: user,
-            pwd: pwd,
-            credsCustId: credsCustId,
-            credsGroupId: credsGroupId,
-          };
 
-          chrome.storage.local.set({
-            credsstorage: credVal,
-          });
-        }
+        var sitestorage = {
+          custId: custId,
+          groupId: groupId,
+          profId: profId,
+          custName: custName,
+        };
+
+        setLocalStorage({ sitestorage });
+      } else {
+        $('#modalAuth').modal('open');
+        await sendMessageToActiveTab({ function: 'allSites' });
       }
-    });
+    } else {
+      await clearLocalStorage();
+      $('#modalClear').modal('open');
+    }
+
+    let creds = await getLocalStorage('credsstorage');
+    if (typeof creds !== 'undefined') {
+      credsCustId = creds.credsCustId;
+      credsGroupId = creds.credsGroupId;
+
+      if (custId != credsCustId || groupId != credsGroupId) {
+        $('#showUser').text('');
+        $('#showPass').text('');
+        user = pwd = credsCustId = credsGroupId = '';
+
+        var credsstorage = {
+          user: user,
+          pwd: pwd,
+          credsCustId: credsCustId,
+          credsGroupId: credsGroupId,
+        };
+
+        setLocalStorage({ credsstorage });
+      }
+    }
   } else {
     warnMessage('yes');
     _gaq.push(['_trackEvent', 'getsite/warnMessage', 'Error']);
   }
 }
 
-function allSites() {
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, { function: 'allSites' });
-  });
-}
-
 //get username and password
-function getup() {
+async function getup() {
   if (site == 'eadmin') {
-    chrome.storage.local.get('sitestorage', function (items) {
-      if (typeof items.sitestorage !== 'undefined') {
-        custId = items.sitestorage.custId;
-        groupId = items.sitestorage.groupId;
-        if (groupId == '') {
-          groupId = 'main';
-        }
-      } else {
-        $('#modalUP').modal('open');
-        _gaq.push(['_trackEvent', 'getup1/modalUP', 'Error']);
+    let siteItems = await getLocalStorage('sitestorage');
+
+    if (typeof siteItems !== 'undefined') {
+      custId = siteItems.custId;
+      groupId = siteItems.groupId;
+      if (groupId == '') {
+        groupId = 'main';
       }
-    });
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(
-        tabs[0].id,
-        { function: 'getup', custId: custId, groupId: groupId },
-        function (response) {
-          if (response.credInfo !== 'no match') {
-            user = response.credInfo[0];
-            pwd = response.credInfo[1];
-            credsCustId = response.credInfo[2];
-            credsGroupId = response.credInfo[3];
-            $('#showUser').text(user);
-            $('#showPass').text(pwd);
+    } else {
+      $('#modalUP').modal('open');
+      _gaq.push(['_trackEvent', 'getup1/modalUP', 'Error']);
+    }
 
-            var credVal = {
-              user: user,
-              pwd: pwd,
-              credsCustId: credsCustId,
-              credsGroupId: credsGroupId,
-            };
-
-            chrome.storage.local.set({
-              credsstorage: credVal,
-            });
-          } else {
-            $('#modalUP').modal('open');
-            _gaq.push(['_trackEvent', 'getup2/modalUP', 'Error']);
-          }
-        }
-      );
+    let getupResp = await sendMessageToActiveTab({
+      function: 'getup',
+      custId: custId,
+      groupId: groupId,
     });
+
+    if (getupResp.credInfo !== 'no match') {
+      user = getupResp.credInfo[0];
+      pwd = getupResp.credInfo[1];
+      credsCustId = getupResp.credInfo[2];
+      credsGroupId = getupResp.credInfo[3];
+      $('#showUser').text(user);
+      $('#showPass').text(pwd);
+
+      var credsstorage = {
+        user: user,
+        pwd: pwd,
+        credsCustId: credsCustId,
+        credsGroupId: credsGroupId,
+      };
+
+      setLocalStorage({ credsstorage });
+    } else {
+      $('#modalUP').modal('open');
+      _gaq.push(['_trackEvent', 'getup2/modalUP', 'Error']);
+    }
   } else {
     warnMessage('yes');
     _gaq.push(['_trackEvent', 'getup3/warnMessage', 'Error']);
@@ -288,24 +267,14 @@ function getup() {
 }
 
 //get the custid.groupid.profid in current ui
-function getuisite() {
+async function getuisite() {
   if (site === 'ebscohost') {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, { function: 'getuisite' }, function (
-        response
-      ) {
-        edsProfile = response.edsPro;
-        $('#showActSite').text(edsProfile);
+    let getuisiteResp = await sendMessageToActiveTab({ function: 'getuisite' });
+    edsProfile = getuisiteResp.edsPro;
+    $('#showActSite').text(edsProfile);
 
-        var uisite = {
-          edsProfile: edsProfile,
-        };
-
-        chrome.storage.local.set({
-          uisite: uisite,
-        });
-      });
-    });
+    var uisite = { edsProfile };
+    setLocalStorage({ uisite });
   } else {
     $('#wrongTab').modal('open');
     _gaq.push(['_trackEvent', 'getuisite/wrongTab', 'Error']);
@@ -314,10 +283,9 @@ function getuisite() {
 
 $('#saveAuthOps').on('click', function () {
   currAuthType = $('#currAuthType').text();
-  saveOptions = {
-    selected: currAuthType,
-  };
-  chrome.storage.local.set({
+  saveOptions = { selected: currAuthType };
+
+  setLocalStorage({
     saveAuthOps: saveOptions,
   });
 });
@@ -330,39 +298,29 @@ function createlink() {
   if ($('#embed_logins').is(':checked')) {
     user = $('#showUser').text();
     pwd = $('#showPass').text();
+
     if (user == '' && pwd == '') {
       var $toastContent = $('<span>Missing User/Password</span>');
       M.toast({ html: $toastContent }, 2000);
     }
+
     authtype = 'uid';
-    creds =
-      '&user=' +
-      encodeURIComponent(user) +
-      '&password=' +
-      encodeURIComponent(pwd);
+    creds = `&user=${encodeURIComponent(user)}&password=${encodeURIComponent(
+      pwd
+    )}`;
   } else {
     authtype = $('#currAuthType').text();
     creds = '';
   }
-  profURL =
-    'https://search.ebscohost.com/login.aspx?custid=' +
-    custId +
-    '&groupid=' +
-    groupId +
-    '&profid=' +
-    profId +
-    '&authtype=' +
-    authtype +
-    creds;
+
+  let baseUrl = `https://search.ebscohost.com/login.aspx`;
+  profURL = `${baseUrl}?custid=${custId}&groupid=${groupid}&profid=${profid}&authtype=${
+    authtype + creds
+  }`;
   $('#showUrl').text(profURL);
 
-  var permalink = {
-    profURL: profURL,
-  };
-
-  chrome.storage.local.set({
-    permalink: permalink,
-  });
+  var permalink = { profURL };
+  setLocalStorage({ permalink });
 
   return profURL;
 }
@@ -378,12 +336,13 @@ function openPermaLink() {
 }
 
 //clear all storage
-function removeStorage() {
-  chrome.storage.local.clear(function () {
-    $('table tr td.storval').empty();
-    $('#ip,#cookie,#url').prop('checked', false);
-    authDefaults();
-  });
+async function removeStorage() {
+  await clearLocalStorage();
+
+  $('table tr td.storval').empty();
+  $('#ip,#cookie,#url').prop('checked', false);
+
+  authDefaults();
 }
 
 $('table tbody tr td a:not(#btnauthtype)').on('click', function () {
@@ -404,34 +363,36 @@ $('table tbody tr td a:not(#btnauthtype)').on('click', function () {
     M.toast({ html: $toastContent }, 2000);
   }
 });
-function gotoauth() {
-  if (site == 'eadmin') {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, { function: 'gotoauth' });
-    });
-  } else {
-    warnMessage('eadmin');
+
+async function gotoauth() {
+  if (site !== 'eadmin') {
     _gaq.push(['_trackEvent', 'gotoauth/warnMessage', 'Error']);
+    return warnMessage('eadmin');
   }
+
+  await sendMessageToActiveTab({ function: 'gotoauth' });
 }
-function gotocustserv() {
-  if (site == 'eadmin') {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, { function: 'gotocustserv' });
-    });
-  } else {
-    warnMessage('eadmin');
+
+async function gotocustserv() {
+  if (site !== 'eadmin') {
     _gaq.push(['_trackEvent', 'gotocustserv/warnMessage', 'Error']);
+    return warnMessage('eadmin');
   }
+
+  await sendMessageToActiveTab({ function: 'gotocustserv' });
 }
-function credPgDown() {
-  if (site == 'eadmin') {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, { function: 'credPgDown' });
-    });
-  } else {
-    warnMessage('eadmin');
+
+async function saveAdminOps() {
+  let activeTab = getActiveTab();
+  await sendMessageToActiveTab({ url: activeTab.url });
+}
+
+async function credPgDown() {
+  if (site !== 'eadmin') {
+    return warnMessage('eadmin');
   }
+
+  await sendMessageToActiveTab({ function: 'credPgDown' });
 }
 
 function clearAuthOps() {
@@ -440,43 +401,37 @@ function clearAuthOps() {
   $('.chk').removeClass('chk');
 }
 
+let optionSwitches = $('.switch input:not(#selectNoneOrAll)');
+console.log(optionSwitches);
+
 $('#selectNoneOrAll').on('click', function () {
   var adminOpsArr = [];
   var checked = this.checked;
-  $('.switch input')
-    .not('#selectNoneOrAll')
-    .each(function () {
-      var id = this.id + '=' + checked;
-      this.checked = checked;
-      adminOpsArr.push(id);
-    });
+  [...optionSwitches].forEach(opt => {
+    opt.checked = checked;
+    adminOpsArr.push(`${opt.id}=${checked}`);
+  });
+
   localStorage.setItem('adminOptions', adminOpsArr);
 });
 
-$('.switch input')
-  .not('#selectNoneOrAll')
-  .on('click', function () {
-    var adminOpsArr = [];
-    $('.switch input')
-      .not('#selectNoneOrAll')
-      .each(function () {
-        var id = this.id;
-        if (this.checked) {
-          id = this.id + '=true';
-        } else {
-          id = this.id + '=false';
-        }
-        adminOpsArr.push(id);
-      });
-    localStorage.setItem('adminOptions', adminOpsArr);
+console.log(optionSwitches);
+optionSwitches.on('click', function () {
+  var adminOpsArr = [];
+  [...optionSwitches].forEach(opt => {
+    console.log({ opt });
+    console.log(opt.id);
+    console.log(opt.checked);
+    console.dir(opt);
+
+    adminOpsArr.push(`${opt.id}=${opt.checked == true}`);
   });
 
-$('.modal').modal();
+  console.log({ adminOpsArr });
+  localStorage.setItem('adminOptions', adminOpsArr);
+});
 
 $('a[href="#authtype"]').on('click', function () {
-  if (!$('#authtype [type="radio"]:checked').hasClass('chk')) {
-    var ckRadio = $('#authtype [type="radio"]:checked').addClass('chk');
-  }
   var currAuthType = $('#currAuthType').text();
   if (
     !currAuthType.match(
@@ -493,8 +448,8 @@ $('input[name="authtype"]').on('click', function () {
   } else if (this.id == 'ip' || this.id == 'cookie' || this.id == 'url') {
     $('#embed_logins').prop('checked', false);
   }
-  var currAuthType = $('#currAuthType').text();
 
+  var currAuthType = $('#currAuthType').text();
   if ($(this).hasClass('chk') && this.checked && this.type == 'radio') {
     $(this).removeClass('chk');
     $('#' + this.id).prop('checked', false);
@@ -507,6 +462,7 @@ $('input[name="authtype"]').on('click', function () {
   if (currAuthType == 'embed_logins') {
     currAuthType = '';
   }
+
   if (this.value == 'embed_logins') {
     currAuthType = 'embed_logins';
   } else {
@@ -539,28 +495,20 @@ $('input[name="authtype"]').on('click', function () {
   }
 
   $('#currAuthType').text(currAuthType);
-  saveOptions = {
-    selected: currAuthType,
-  };
-  chrome.storage.local.set({
+  saveOptions = { selected: currAuthType };
+  setLocalStorage({
     saveAuthOps: saveOptions,
   });
   chips(currAuthType);
 });
 
+$('.modal').modal();
 $('.tooltipped').tooltip();
-
 $('.fixed-action-btn').floatingActionButton({
   direction: 'right', // Direction menu comes out
   hoverEnabled: false, // Hover enabled
   toolbarEnabled: false, // Toolbar transition enabled
 });
-
-function saveAdminOps() {
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    chrome.tabs.update(tabs[0].id, { url: tabs[0].url });
-  });
-}
 
 $('footer .btn-large').on('click', function () {
   $('#mail').css('display', 'block');
@@ -570,18 +518,39 @@ $('footer .btn-large').on('click', function () {
   $('#textarea1').val('');
 });
 
-document.getElementById('getsite').onclick = getsite;
-// document.getElementById("getup").onclick = getup;
-document.getElementById('gotoauth').onclick = gotoauth;
-document.getElementById('gotocustserv').onclick = gotocustserv;
-document.getElementById('removeStorage').onclick = removeStorage;
-document.getElementById('activesite').onclick = getuisite;
-document.getElementById('createlink').onclick = createlink;
-document.getElementById('modalCL').onclick = createlink;
-document.getElementById('permalink').onclick = openPermaLink;
-document.getElementById('modalLO').onclick = openPermaLink;
-document.getElementById('saveAdminOps').onclick = saveAdminOps;
-document.getElementById('clearAuthOps').onclick = clearAuthOps;
+function setOnClick(obj) {
+  for (let [key, fn] of Object.entries(obj)) {
+    document.getElementById(key).onclick = fn;
+  }
+}
+
+setOnClick({
+  getsite: getsite,
+  // getup: getup,
+  gotoauth: gotoauth,
+  gotocustserv: gotocustserv,
+  removeStorage: removeStorage,
+  activesite: getuisite,
+  createlink: createlink,
+  modalCL: createlink,
+  permalink: openPermaLink,
+  modalLO: openPermaLink,
+  saveAdminOps: saveAdminOps,
+  clearAuthOps: clearAuthOps,
+});
+
+// document.getElementById('getsite').onclick = getsite;
+// // document.getElementById("getup").onclick = getup;
+// document.getElementById('gotoauth').onclick = gotoauth;
+// document.getElementById('gotocustserv').onclick = gotocustserv;
+// document.getElementById('removeStorage').onclick = removeStorage;
+// document.getElementById('activesite').onclick = getuisite;
+// document.getElementById('createlink').onclick = createlink;
+// document.getElementById('modalCL').onclick = createlink;
+// document.getElementById('permalink').onclick = openPermaLink;
+// document.getElementById('modalLO').onclick = openPermaLink;
+// document.getElementById('saveAdminOps').onclick = saveAdminOps;
+// document.getElementById('clearAuthOps').onclick = clearAuthOps;
 
 /* google analytics */
 function trackButtonClick(e) {

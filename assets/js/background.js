@@ -1,29 +1,21 @@
-var optionArray = [];
+function handleMessage(request, sender) {
+  console.log({ request });
+  console.log({ sender });
 
-function getSettings(optionSet) {
-  for (var i = 0; i < optionSet.length; i++) {
-    curopt = optionSet[i];
-    id = curopt.split('=')[0];
-    state = curopt.split('=')[1];
-    optionArray.push(state);
-  }
-  return optionArray;
+  return new Promise(resolve => {
+    if (request.getoptions !== 'frombg') {
+      return resolve();
+    }
+
+    let adminOptionsValues = [];
+    if ('adminOptions' in localStorage) {
+      let adminOptions = localStorage.getItem('adminOptions');
+      let adminOptionsArr = adminOptions.split(',');
+      adminOptionsValues = adminOptionsArr.map(opt => opt.split('=')[1]);
+    }
+
+    resolve({ returnoptions: adminOptionsValues });
+  });
 }
 
-browser.extension.onRequest.addListener(function (
-  request,
-  sender,
-  sendResponse
-) {
-  if (request.getoptions == 'frombg') {
-    if ('adminOptions' in localStorage) {
-      optionArray = [];
-      var optionSet = localStorage.getItem('adminOptions');
-      optionSet = optionSet.split(',');
-      optionArray = getSettings(optionSet);
-      sendResponse({ returnoptions: optionArray });
-    } else {
-      sendResponse({ returnoptions: false });
-    }
-  }
-});
+browser.runtime.onMessage.addListener(handleMessage);
