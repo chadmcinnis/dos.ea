@@ -1,25 +1,44 @@
 {
+"update_url": "https://clients2.google.com/service/update2/crx",
+
   "manifest_version": 2,
   "name": "< dos.ea />",
-  "version": "0.5110",
+  "version": "1.3",
   "description": "this extension isn't perfect, and neither are you, bubs.",
+  "background": {
+    "scripts": ["/assets/js/background.js"]
+  },
   "browser_action": {
-      "default_icon": "/assets/icon/icon2.png",
-      "default_popup": "popup.html"
+    "default_icon": "/assets/icon/icon2.png",
+    "default_popup": "popup.html"
   },
   "content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'",
   "content_scripts": [
     {
-      "matches": ["*://*.ebscohost.com/*"],
-      "all_frames": true,
+      "matches": [
+        "*://*.ebscohost.com/*",
+        "*://*/eds*",
+        "*://*/ehost*",
+        "*://*/openurl*",
+        "*://*/pfi*",
+        "*://*/bsi*"
+      ],
       "js": ["/assets/js/jquery-3.2.1.min.js", "/assets/js/script.js"]
     }
   ],
   "permissions": [
-      "tabs", "*://*.ebscohost.com/*",
-      "storage"
+    "tabs",
+    "*://*.ebscohost.com/*",
+    "*://*/eds*",
+    "*://*/ehost*",
+    "*://*/openurl*",
+    "*://*/pfi*",
+    "*://*/bsi*",
+    "storage"
   ],
-  "icons": { "16": "/assets/icon/icon2.png",
-           "48": "/assets/icon/icon2.png",
-          "128": "/assets/icon/icon2.png" }
+  "icons": {
+    "16": "/assets/icon/icon2.png",
+    "48": "/assets/icon/icon2.png",
+    "128": "/assets/icon/icon2.png"
+  }
 }

@@ -1,64 +1,42 @@
-//interact with DOM
-// console.log('--script within dom--');
-
-//template to give popup direct Information
-// chrome.runtime.onMessage.addListener(demo);
-// function demo(request, sender, sendResponse) {
-//     if (request.greeting == "hello")
-//       // sendResponse({farewell: "goodbye"});
-// }
-
-/* -------------  */
-//variables
 var custName, custId, groupId, profId;
 var siteInfo=[];
 var credInfo=[];
 var optionSet=[];
-var optionArray=[];
 var custIdVal, groupIdVal, profIdVal;
 var eadmin, id, state, curopt, optionSet;
-//temp
-var x;
-var bottomBranding,profiles,guestAccess,dbHighlighting,pageNumbers;
 
-if (window.location.hostname.indexOf('eadmin') > -1) {
+if (window.location.hostname.indexOf('eadmin') > -1 && window.location.pathname.indexOf('CustomizeEhostColorsForm') === -1) {
   var jq = document.createElement('script');
   jq.src = 'https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js';
   document.getElementsByTagName('head')[0].appendChild(jq);
 
-function getSettings(optionSet) {
-  $(optionSet).each(function () {
-    curopt = this;
-    id = curopt.split('=')[0];
-    state = curopt.split('=')[1];
-    optionArray.push(state);
-  });
-  return optionArray;
+  var optionArray;
+  chrome.extension.sendRequest({getoptions: "frombg"}, function(response) {
+    optionArray = response.returnoptions;
+		if (optionArray) {
+			var count2 = 0;
+			var waitforArray = setInterval(function() {
+				count2++;
+        if (count2 > 200) {
+          clearInterval(waitforArray);
+        } else {
+  				if (optionArray.length > 0) {
+  					clearInterval(waitforArray);
+  					$('body').append('<span><script id="doseaCustomAdmin" data-params="#d8ecb7|'
+            + optionArray[0] + '|'
+            + optionArray[1] + '|'
+            + optionArray[2] + '|'
+            + optionArray[3] + '|'
+            + optionArray[4] + '|'
+            + optionArray[5] + '|'
+            + optionArray[6] + '|'
+            + optionArray[7] + '" src="https://gss.ebscohost.com/cmcinnis/dos.ea/assets/js/customadmin-v1.min.js"></script></span>');
+  				}
+				}
+			},50);
+		}
+	});
 }
-
-if ("adminOptions" in localStorage) {
-  optionSet = localStorage.getItem('adminOptions');
-  optionSet = optionSet.split(',');
-  optionArray = getSettings(optionSet);
-}
-
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-  if (request.function == 'adminops') {
-    optionSet = request.option;
-    localStorage.setItem('adminOptions', optionSet);
-    getSettings(optionSet);
-  }
-});
-
-var count2 = 0;
-var waitforArray = setInterval( function() {
-  count2++; if (count2 > 120) { clearInterval(waitforArray); } else {
-  if (optionArray) {
-    clearInterval(waitforArray);
-    $('body').append('<script id="doseaCustomAdmin" data-params="#d8ecb7|'+optionArray[0]+'|'+optionArray[1]+'|'+optionArray[2]+'|'+optionArray[3]+'|'+optionArray[4]+'" src="https://gss.ebscohost.com/cmcinnis/dos.ea/assets/js/customadmin.js"></script>');
-  }
-  }
-}, 500);
 
 //custid
 function getCustId(){
@@ -100,7 +78,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.function == 'sitecheck') {
     if (window.location.hostname.indexOf('eadmin') > -1) {
       sendResponse({site: "eadmin"});
-    } else if (window.location.hostname.match(/(eds|web|ehis|openurl|resolver|search)/)) {
+    } else {
       sendResponse({site: "ebscohost"});
     }
   }
@@ -120,15 +98,24 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     var y = 0;
     var match = false;
     var tabLen = $('#grid_MainDataGrid .DataGrid-EmptyWhiteStyle input').length;
-    $('#grid_MainDataGrid .DataGrid-EmptyWhiteStyle input').each(function() {
+    var currentDate = new Date();
+    $('#grid_MainDataGrid tr:not(:first)').each(function() {
       if (y <= tabLen) {
-        var rowContents = $(this).val();
+        var rowContents = $(this).find('.DataGrid-EmptyWhiteStyle input').val();
         var authInfo = rowContents.split(',');
         var rowUser = authInfo[0];
         var rowPass = authInfo[1];
         var rowCustid = authInfo[2];
         var rowGroup = authInfo[3];
         if (custId == rowCustid && groupId == rowGroup) {
+          var expireDate = $(this).find('span[id*="_ExpireDate_"]');
+          if (expireDate) {
+            var expireDateVal = new Date(expireDate.text());
+            if (currentDate.getTime() > expireDateVal.getTime()) {
+              expireDate.parent().css('background-color','#ff000078');
+              return true;
+            }
+          }
           credInfo = [rowUser,rowPass,custId,groupId];
           sendResponse({credInfo});
           match = true;
@@ -145,16 +132,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.function == 'allSites') {
     $('#authHeader_toolbar_ddlCurrSite').attr('style','background-color:#ffecb3 !important');
   }
-
-  //get the custid.groupid.profid in current ui
-  if (request.function == 'getuisite') {
-    var content = jQuery('footer').html();
-        edsProfile = content.match(/<!-- user\:.*?-->/g)[0];
-        edsProfile = edsProfile.split('<!-- user: ')[1];
-        edsProfile = edsProfile.split(' -->')[0];
-    sendResponse({edsPro: edsProfile});
-  }
-
   //click authentication tab
   if (request.function == 'gotoauth') {
     $('#lnkAuthLi').trigger('click');
@@ -167,36 +144,36 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.function == 'credPgDown') {
     $('img[alt="MoveDown"]').trigger('click');
   }
-});
-} else {
-  chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    //check to see if we're on an ebsco site
-    if (request.function == 'sitecheck') {
-      if (window.location.hostname.indexOf('eadmin') > -1) {
-        sendResponse({site: "eadmin"});
-      } else if (window.location.hostname.match(/(eds|web|ehis|openurl|resolver|search)/)) {
-        sendResponse({site: "ebscohost"});
+
+  //get the custid.groupid.profid in current ui
+  if (request.function == 'getuisite') {
+    if (window.location.pathname.indexOf('/openurl') === -1) {
+      var ep = document.getElementsByTagName('script');
+      var json = null;
+      for (var i=0;i<ep.length;i++) {
+        var text = ep[i].textContent;
+        if (text.indexOf('var ep =') > -1){
+          json = JSON.parse(text.split('ep =')[1]);
+        }
+      }
+
+      if (json && json.clientData && json.clientData.pid) {
+        sendResponse({edsPro: json.clientData.pid});
+      } else {
+        var content = $('footer').html();
+        var edsProfile = content.match(/<!-- user\:.*?-->/g)[0];
+        edsProfile = edsProfile.split('<!-- user: ')[1];
+        edsProfile = edsProfile.split(' -->')[0];
+        sendResponse({edsPro: edsProfile});
+      }
+    } else {
+      var lastDiv = $('#footerControl div').last();
+      var checkPieces = lastDiv.text().split('.');
+      if (checkPieces.length === 3) {
+        sendResponse({edsPro: lastDiv.text()});
+      } else {
+        sendResponse({edsPro: 'N/A'});
       }
     }
-    //get the custid.groupid.profid in current ui
-    if (request.function == 'getuisite') {
-      var content = jQuery('footer').html();
-          edsProfile = content.match(/<!-- user\:.*?-->/g)[0];
-          edsProfile = edsProfile.split('<!-- user: ')[1];
-          edsProfile = edsProfile.split(' -->')[0];
-      sendResponse({edsPro: edsProfile});
-    }
-  });
-}
-
-
-
-
-
-
-
-
-
-
-
-//dfasdfsf
+  }
+});
